@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "403993712957",
+    "project_id": "vcall-app-1a546",
+    "storage_bucket": "vcall-app-1a546.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:403993712957:android:fc4fd29cedc701a81f0d54",
+        "android_client_info": {
+          "package_name": "com.example.video_call_demo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBsQNc0Hqav4TAygFqhuK-jNRuLM6vA_-I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

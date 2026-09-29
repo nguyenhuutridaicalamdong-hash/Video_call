@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'core/routes/app_routes.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/splash/splash_screen.dart';
@@ -9,8 +10,9 @@ import 'screens/call/incoming_call_screen.dart';
 import 'screens/call/video_call_screen.dart';
 import 'screens/call/call_ended_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const VCallApp());
 }
 
