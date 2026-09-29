@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/mock_data.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/user_avatar.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -12,6 +14,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final AuthService _authService = AuthService();
   bool _notificationsEnabled = true;
   bool _darkModeEnabled = false;
 
@@ -33,13 +36,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               foregroundColor: Colors.white,
               minimumSize: const Size(90, 40),
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                AppRoutes.login,
-                (route) => false,
-              );
+              await _authService.signOut();
+              if (mounted) {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoutes.login,
+                  (route) => false,
+                );
+              }
             },
             child: const Text('Logout'),
           ),
@@ -61,69 +67,90 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             children: [
               // User Card Section
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.border, width: 1),
-                ),
-                child: Column(
-                  children: [
-                    UserAvatar(
-                      imageUrl: MockData.currentUserAvatar,
-                      name: MockData.currentUserName,
-                      radius: 46,
-                      showOnlineIndicator: true,
-                      isOnline: true,
+              StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                stream: _authService.getUserDocStream(),
+                builder: (context, snapshot) {
+                  final userData = snapshot.data?.data();
+                  final user = _authService.currentUser;
+                  final displayName = (userData?['name'] as String?)?.isNotEmpty == true
+                      ? userData!['name'] as String
+                      : (user?.displayName?.isNotEmpty == true
+                          ? user!.displayName!
+                          : (user?.email?.split('@').first ?? 'User'));
+                  final email = (userData?['email'] as String?)?.isNotEmpty == true
+                      ? userData!['email'] as String
+                      : (user?.email ?? MockData.currentUserEmail);
+                  final avatarUrl = (userData?['avatarUrl'] as String?)?.isNotEmpty == true
+                      ? userData!['avatarUrl'] as String
+                      : MockData.currentUserAvatar;
+
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.border, width: 1),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      MockData.currentUserName,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      MockData.currentUserEmail,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    // Online Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.onlineLight,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.circle, size: 8, color: AppColors.online),
-                          SizedBox(width: 6),
-                          Text(
-                            'Online',
-                            style: TextStyle(
-                              color: AppColors.online,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                            ),
+                    child: Column(
+                      children: [
+                        UserAvatar(
+                          imageUrl: avatarUrl,
+                          name: displayName,
+                          radius: 46,
+                          showOnlineIndicator: true,
+                          isOnline: true,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          displayName,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          email,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        // Online Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.onlineLight,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.circle, size: 8, color: AppColors.online),
+                              SizedBox(width: 6),
+                              Text(
+                                'Online',
+                                style: TextStyle(
+                                  color: AppColors.online,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
               const SizedBox(height: 24),
 

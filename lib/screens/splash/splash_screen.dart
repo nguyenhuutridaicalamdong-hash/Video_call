@@ -1,5 +1,8 @@
 import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 
@@ -25,19 +28,26 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 1200),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.85,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
     _controller.forward();
 
-    // Auto navigate to Login after 2.5s
+    // Auto navigate after 2.5s based on auth state
     _navTimer = Timer(const Duration(milliseconds: 2500), () {
       if (mounted) {
-        Navigator.pushReplacementNamed(context, AppRoutes.login);
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          Navigator.pushReplacementNamed(context, AppRoutes.main);
+        } else {
+          Navigator.pushReplacementNamed(context, AppRoutes.login);
+        }
       }
     });
   }

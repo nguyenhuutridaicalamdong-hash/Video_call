@@ -3,6 +3,8 @@ import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/mock_data.dart';
 import '../../models/contact_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/user_avatar.dart';
 
@@ -16,6 +18,7 @@ class ContactsScreen extends StatefulWidget {
 }
 
 class _ContactsScreenState extends State<ContactsScreen> {
+  final AuthService _authService = AuthService();
   final TextEditingController _searchController = TextEditingController();
   List<ContactModel> _filteredContacts = MockData.contacts;
 
@@ -59,12 +62,28 @@ class _ContactsScreenState extends State<ContactsScreen> {
                   widget.onNavigateTab!(3); // Navigate to Profile tab
                 }
               },
-              child: UserAvatar(
-                imageUrl: MockData.currentUserAvatar,
-                name: MockData.currentUserName,
-                radius: 18,
-                showOnlineIndicator: true,
-                isOnline: true,
+              child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                stream: _authService.getUserDocStream(),
+                builder: (context, snapshot) {
+                  final userData = snapshot.data?.data();
+                  final user = _authService.currentUser;
+                  final displayName = (userData?['name'] as String?)?.isNotEmpty == true
+                      ? userData!['name'] as String
+                      : (user?.displayName?.isNotEmpty == true
+                          ? user!.displayName!
+                          : (user?.email?.split('@').first ?? 'User'));
+                  final avatarUrl = (userData?['avatarUrl'] as String?)?.isNotEmpty == true
+                      ? userData!['avatarUrl'] as String
+                      : MockData.currentUserAvatar;
+
+                  return UserAvatar(
+                    imageUrl: avatarUrl,
+                    name: displayName,
+                    radius: 18,
+                    showOnlineIndicator: true,
+                    isOnline: true,
+                  );
+                },
               ),
             ),
           ),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/mock_data.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/user_avatar.dart';
 
@@ -12,6 +14,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AuthService authService = AuthService();
     final onlineContacts = MockData.onlineContacts.take(3).toList();
     final recentCalls = MockData.callHistory.take(3).toList();
 
@@ -24,74 +27,97 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Top Header: User Greeting & Avatar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
+              StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                stream: authService.getUserDocStream(),
+                builder: (context, snapshot) {
+                  final userData = snapshot.data?.data();
+                  final user = authService.currentUser;
+                  final displayName = (userData?['name'] as String?)?.isNotEmpty == true
+                      ? userData!['name'] as String
+                      : (user?.displayName?.isNotEmpty == true
+                          ? user!.displayName!
+                          : (user?.email?.split('@').first ?? 'User'));
+                  final avatarUrl = (userData?['avatarUrl'] as String?)?.isNotEmpty == true
+                      ? userData!['avatarUrl'] as String
+                      : MockData.currentUserAvatar;
+
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      UserAvatar(
-                        imageUrl: MockData.currentUserAvatar,
-                        name: MockData.currentUserName,
-                        radius: 24,
-                        showOnlineIndicator: true,
-                        isOnline: true,
-                      ),
-                      const SizedBox(width: 14),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Good evening, Trí 👋',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            UserAvatar(
+                              imageUrl: avatarUrl,
+                              name: displayName,
+                              radius: 24,
+                              showOnlineIndicator: true,
+                              isOnline: true,
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.online,
-                                  shape: BoxShape.circle,
-                                ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Xin chào, $displayName 👋',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: const BoxDecoration(
+                                          color: AppColors.online,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      const Text(
+                                        'Available for call',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.textSecondary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 6),
-                              const Text(
-                                'Available for call',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Quick Incoming Call Simulation Trigger for Demo
+                      IconButton.filledTonal(
+                        onPressed: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.incomingCall,
+                            arguments: MockData.contacts[0], // Minh Nguyễn
+                          );
+                        },
+                        icon: const Icon(Icons.ring_volume_rounded),
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppColors.primaryLight,
+                          foregroundColor: AppColors.primary,
+                        ),
+                        tooltip: 'Demo Incoming Call',
                       ),
                     ],
-                  ),
-
-                  // Quick Incoming Call Simulation Trigger for Demo
-                  IconButton.filledTonal(
-                    onPressed: () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.incomingCall,
-                        arguments: MockData.contacts[0], // Minh Nguyễn
-                      );
-                    },
-                    icon: const Icon(Icons.ring_volume_rounded),
-                    style: IconButton.styleFrom(
-                      backgroundColor: AppColors.primaryLight,
-                      foregroundColor: AppColors.primary,
-                    ),
-                    tooltip: 'Demo Incoming Call',
-                  ),
-                ],
+                  );
+                },
               ),
               const SizedBox(height: 20),
 

@@ -13,13 +13,16 @@ class AuthService {
 
   // Sign up with email and password
   Future<UserCredential?> signUpWithEmailAndPassword(
-      String name, String email, String password) async {
+    String name,
+    String email,
+    String password,
+  ) async {
     try {
-      UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: email.trim(),
-        password: password.trim(),
-      );
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(
+            email: email.trim(),
+            password: password.trim(),
+          );
 
       // Create a user document in Firestore
       if (userCredential.user != null) {
@@ -31,7 +34,7 @@ class AuthService {
           'avatarUrl': '', // Optional: Add default avatar
           'isOnline': true,
         });
-        
+
         // Update display name
         await userCredential.user!.updateDisplayName(name.trim());
       }
@@ -45,18 +48,21 @@ class AuthService {
 
   // Sign in with email and password
   Future<UserCredential?> signInWithEmailAndPassword(
-      String email, String password) async {
+    String email,
+    String password,
+  ) async {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password.trim(),
       );
-      
+
       // Update online status
       if (userCredential.user != null) {
-        await _firestore.collection('users').doc(userCredential.user!.uid).update({
-          'isOnline': true,
-        });
+        await _firestore
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .update({'isOnline': true});
       }
       return userCredential;
     } on FirebaseAuthException catch (e) {
@@ -85,5 +91,22 @@ class AuthService {
     } catch (e) {
       throw 'An error occurred: $e';
     }
+  }
+
+  // Stream user profile data from Firestore
+  Stream<DocumentSnapshot<Map<String, dynamic>>>? getUserDocStream([
+    String? uid,
+  ]) {
+    final targetUid = uid ?? currentUser?.uid;
+    if (targetUid == null) return null;
+    return _firestore.collection('users').doc(targetUid).snapshots();
+  }
+
+  // Get user profile data once from Firestore
+  Future<Map<String, dynamic>?> getUserData([String? uid]) async {
+    final targetUid = uid ?? currentUser?.uid;
+    if (targetUid == null) return null;
+    final doc = await _firestore.collection('users').doc(targetUid).get();
+    return doc.data();
   }
 }
