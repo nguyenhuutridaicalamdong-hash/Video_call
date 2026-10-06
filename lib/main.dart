@@ -9,9 +9,9 @@ import 'screens/main_wrapper.dart';
 import 'screens/call/incoming_call_screen.dart';
 import 'screens/call/video_call_screen.dart';
 import 'screens/call/call_ended_screen.dart';
-
 import 'models/contact_model.dart';
 import 'screens/call/zego_call_page.dart';
+import 'services/user_session.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,17 +38,36 @@ class VCallApp extends StatelessWidget {
         AppRoutes.login: (context) => const LoginScreen(),
         AppRoutes.register: (context) => const RegisterScreen(),
         AppRoutes.main: (context) => const MainWrapper(),
-        AppRoutes.incomingCall: (context) => const IncomingCallScreen(),
+        AppRoutes.incomingCall: (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          ContactModel? caller;
+          String? roomId;
+
+          if (args is Map<String, dynamic>) {
+            caller = args['caller'] as ContactModel?;
+            roomId = args['roomId'] as String?;
+          } else if (args is ContactModel) {
+            caller = args;
+          }
+          return IncomingCallScreen(caller: caller, roomId: roomId);
+        },
         AppRoutes.videoCall: (context) => const VideoCallScreen(),
         AppRoutes.zegoCall: (context) {
-          final contact = ModalRoute.of(context)?.settings.arguments as ContactModel? ??
-              const ContactModel(
-                id: '1',
-                name: 'Minh Nguyễn',
-                email: 'minh.nguyen@example.com',
-                isOnline: true,
-              );
-          return ZegoCallPage(contact: contact);
+          final args = ModalRoute.of(context)?.settings.arguments;
+          ContactModel contact;
+          String? roomId;
+
+          if (args is Map<String, dynamic>) {
+            contact = args['contact'] as ContactModel;
+            roomId = args['roomId'] as String?;
+          } else if (args is ContactModel) {
+            contact = args;
+            roomId = null;
+          } else {
+            contact = UserSession.contactsForCurrentUser.first;
+            roomId = null;
+          }
+          return ZegoCallPage(contact: contact, customRoomId: roomId);
         },
         AppRoutes.callEnded: (context) => const CallEndedScreen(),
       },

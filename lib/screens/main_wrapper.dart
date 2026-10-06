@@ -5,6 +5,8 @@ import 'contacts/contacts_screen.dart';
 import 'calls/calls_screen.dart';
 import 'profile/profile_screen.dart';
 
+import '../services/call_signaling_service.dart';
+
 class MainWrapper extends StatefulWidget {
   final int initialIndex;
 
@@ -21,6 +23,15 @@ class _MainWrapperState extends State<MainWrapper> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CallSignalingService.instance.startListening(context);
+    });
+  }
+
+  @override
+  void dispose() {
+    CallSignalingService.instance.stopListening();
+    super.dispose();
   }
 
   void _onTabTapped(int index) {

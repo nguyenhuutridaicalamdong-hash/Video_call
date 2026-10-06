@@ -3,8 +3,9 @@ import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 import '../../core/constants/zego_config.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
-import '../../data/mock_data.dart';
 import '../../models/contact_model.dart';
+import '../../services/user_session.dart';
+import '../../services/call_signaling_service.dart';
 
 class ZegoCallPage extends StatelessWidget {
   final ContactModel contact;
@@ -58,7 +59,6 @@ class ZegoCallPage extends StatelessWidget {
                 const SizedBox(height: 28),
                 ElevatedButton(
                   onPressed: () {
-                    // Chuyển sang màn hình demo mô phỏng sẵn có
                     Navigator.pushReplacementNamed(
                       context,
                       AppRoutes.videoCall,
@@ -78,10 +78,18 @@ class ZegoCallPage extends StatelessWidget {
       );
     }
 
-    // Tên phòng gọi chung giữa 2 máy (dùng customRoomId hoặc ghép id)
-    final callID = customRoomId ?? 'vcall_room_${contact.id}';
-    final currentUserId = MockData.currentUserEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-    final currentUserName = MockData.currentUserName;
+    final currentUser = UserSession.currentUser;
+
+    // Tên phòng gọi chung giữa 2 máy (chuẩn 1-1, đồng nhất giữa cả 2 bên)
+    final callID = customRoomId ??
+        CallSignalingService.get1on1RoomId(currentUser.email, contact.email);
+
+    // User ID và User Name riêng biệt cho từng máy
+    final currentUserId =
+        currentUser.email.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final currentUserName = currentUser.name;
+
+    debugPrint('[ZegoCallPage] Tham gia phòng: $callID với User: $currentUserId ($currentUserName)');
 
     return SafeArea(
       child: ZegoUIKitPrebuiltCall(
@@ -93,6 +101,7 @@ class ZegoCallPage extends StatelessWidget {
         config: ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall(),
         events: ZegoUIKitPrebuiltCallEvents(
           onCallEnd: (event, defaultAction) {
+            CallSignalingService.instance.endCall(callID);
             defaultAction.call();
             Navigator.pushReplacementNamed(
               context,
