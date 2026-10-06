@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/zego_config.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/mock_data.dart';
@@ -194,7 +195,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
                               onPressed: () {
                                 Navigator.pushNamed(
                                   context,
-                                  AppRoutes.videoCall,
+                                  ZegoConfig.isConfigured
+                                      ? AppRoutes.zegoCall
+                                      : AppRoutes.videoCall,
                                   arguments: contact,
                                 );
                               },

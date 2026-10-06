@@ -10,9 +10,16 @@ import 'screens/call/incoming_call_screen.dart';
 import 'screens/call/video_call_screen.dart';
 import 'screens/call/call_ended_screen.dart';
 
+import 'models/contact_model.dart';
+import 'screens/call/zego_call_page.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('Firebase not initialized yet: $e');
+  }
   runApp(const VCallApp());
 }
 
@@ -33,6 +40,16 @@ class VCallApp extends StatelessWidget {
         AppRoutes.main: (context) => const MainWrapper(),
         AppRoutes.incomingCall: (context) => const IncomingCallScreen(),
         AppRoutes.videoCall: (context) => const VideoCallScreen(),
+        AppRoutes.zegoCall: (context) {
+          final contact = ModalRoute.of(context)?.settings.arguments as ContactModel? ??
+              const ContactModel(
+                id: '1',
+                name: 'Minh Nguyễn',
+                email: 'minh.nguyen@example.com',
+                isOnline: true,
+              );
+          return ZegoCallPage(contact: contact);
+        },
         AppRoutes.callEnded: (context) => const CallEndedScreen(),
       },
     );

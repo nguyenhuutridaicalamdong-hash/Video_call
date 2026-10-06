@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../core/constants/zego_config.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/mock_data.dart';
@@ -151,7 +152,9 @@ class HomeScreen extends StatelessWidget {
                       onTap: () {
                         Navigator.pushNamed(
                           context,
-                          AppRoutes.videoCall,
+                          ZegoConfig.isConfigured
+                              ? AppRoutes.zegoCall
+                              : AppRoutes.videoCall,
                           arguments: contact,
                         );
                       },
@@ -231,7 +234,9 @@ class HomeScreen extends StatelessWidget {
                               } else {
                                 Navigator.pushNamed(
                                   context,
-                                  AppRoutes.videoCall,
+                                  ZegoConfig.isConfigured
+                                      ? AppRoutes.zegoCall
+                                      : AppRoutes.videoCall,
                                   arguments: MockData.contacts[0],
                                 );
                               }
@@ -360,7 +365,9 @@ class HomeScreen extends StatelessWidget {
                         onPressed: () {
                           Navigator.pushNamed(
                             context,
-                            AppRoutes.videoCall,
+                            ZegoConfig.isConfigured
+                                ? AppRoutes.zegoCall
+                                : AppRoutes.videoCall,
                             arguments: call.contact,
                           );
                         },

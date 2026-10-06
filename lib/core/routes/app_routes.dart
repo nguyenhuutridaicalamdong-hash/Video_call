@@ -5,5 +5,6 @@ class AppRoutes {
   static const String main = '/main';
   static const String incomingCall = '/incoming-call';
   static const String videoCall = '/video-call';
+  static const String zegoCall = '/zego-call';
   static const String callEnded = '/call-ended';
 }
