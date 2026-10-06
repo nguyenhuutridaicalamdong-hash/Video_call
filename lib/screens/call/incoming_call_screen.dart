@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/mock_data.dart';
@@ -21,41 +22,51 @@ class IncomingCallScreen extends StatefulWidget {
 }
 
 class _IncomingCallScreenState extends State<IncomingCallScreen> {
-  Timer? _autoConnectTimer;
-  int _countdownSeconds = 3;
   bool _hasAccepted = false;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _callDocSubscription;
 
   @override
   void initState() {
     super.initState();
-    // Tự động kết nối sau 3 giây để người dùng trải nghiệm tự động hóa 1-1 mượt mà
-    _startCountdown();
+    _listenForCallerCancellation();
   }
 
-  void _startCountdown() {
-    _autoConnectTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return;
-      if (_countdownSeconds > 1) {
-        setState(() {
-          _countdownSeconds--;
+  void _listenForCallerCancellation() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final rawArgs = ModalRoute.of(context)?.settings.arguments;
+      String? activeRoomId = widget.roomId;
+      if (rawArgs is Map<String, dynamic>) {
+        activeRoomId = rawArgs['roomId'] as String?;
+      }
+
+      if (activeRoomId != null) {
+        _callDocSubscription = FirebaseFirestore.instance
+            .collection('active_calls')
+            .doc(activeRoomId)
+            .snapshots()
+            .listen((snapshot) {
+          if (!mounted) return;
+          // Nếu người gọi đã hủy cuộc gọi (doc bị xóa hoặc status == declined)
+          if (!snapshot.exists || snapshot.data()?['status'] == 'declined') {
+            if (!_hasAccepted && Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          }
         });
-      } else {
-        _autoConnectTimer?.cancel();
-        _acceptCall();
       }
     });
   }
 
   @override
   void dispose() {
-    _autoConnectTimer?.cancel();
+    _callDocSubscription?.cancel();
     super.dispose();
   }
 
   void _acceptCall() {
     if (_hasAccepted) return;
     _hasAccepted = true;
-    _autoConnectTimer?.cancel();
+    _callDocSubscription?.cancel();
 
     final rawArgs = ModalRoute.of(context)?.settings.arguments;
     ContactModel activeCaller;
@@ -85,7 +96,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   }
 
   void _declineCall() {
-    _autoConnectTimer?.cancel();
+    _callDocSubscription?.cancel();
     final rawArgs = ModalRoute.of(context)?.settings.arguments;
     String? activeRoomId = widget.roomId;
     if (rawArgs is Map<String, dynamic>) {
@@ -95,7 +106,9 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
     if (activeRoomId != null) {
       CallSignalingService.instance.declineCall(activeRoomId);
     }
-    Navigator.pop(context);
+    if (mounted && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -165,7 +178,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 48),
 
                   // Caller Info
                   UserAvatar(
@@ -193,42 +206,6 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 16),
-
-                  // Auto-connect notification pill
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.greenAccent),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Tự động kết nối sau $_countdownSeconds giây...',
-                          style: const TextStyle(
-                            color: Colors.greenAccent,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
                   const Spacer(),
 
                   // Action Buttons: Decline (Red) and Accept (Green)
@@ -245,7 +222,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
                         onPressed: _declineCall,
                       ),
 
-                      // Accept button
+                      // Accept button (Chỉ kết nối khi bấm vào nút này)
                       CallCircleButton(
                         icon: Icons.videocam_rounded,
                         backgroundColor: AppColors.online,
@@ -256,7 +233,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 48),
                 ],
               ),
             ),
