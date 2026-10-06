@@ -91,27 +91,30 @@ class ZegoCallPage extends StatelessWidget {
 
     debugPrint('[ZegoCallPage] Tham gia phòng: $callID với User: $currentUserId ($currentUserName)');
 
-    return SafeArea(
-      child: ZegoUIKitPrebuiltCall(
-        appID: ZegoConfig.appID,
-        appSign: ZegoConfig.appSign,
-        userID: currentUserId,
-        userName: currentUserName,
-        callID: callID,
-        config: ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall(),
-        events: ZegoUIKitPrebuiltCallEvents(
-          onCallEnd: (event, defaultAction) {
-            CallSignalingService.instance.endCall(callID);
-            defaultAction.call();
-            Navigator.pushReplacementNamed(
-              context,
-              AppRoutes.callEnded,
-              arguments: {
-                'contact': contact,
-                'duration': 'Live Call',
-              },
-            );
-          },
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: ZegoUIKitPrebuiltCall(
+          appID: ZegoConfig.appID,
+          appSign: ZegoConfig.appSign,
+          userID: currentUserId,
+          userName: currentUserName,
+          callID: callID,
+          config: ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall(),
+          events: ZegoUIKitPrebuiltCallEvents(
+            onCallEnd: (event, defaultAction) {
+              CallSignalingService.instance.endCall(callID);
+              defaultAction.call();
+              Navigator.pushReplacementNamed(
+                context,
+                AppRoutes.callEnded,
+                arguments: {
+                  'contact': contact,
+                  'duration': 'Live Call',
+                },
+              );
+            },
+          ),
         ),
       ),
     );
