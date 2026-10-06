@@ -1,11 +1,9 @@
 class ZegoConfig {
-  /// Lấy AppID (số nguyên) từ ZEGOCLOUD Console và dán vào đây
-  /// Ví dụ: static const int appID = 1234567890;
-  static const int appID = 0; 
+  /// AppID từ ZEGOCLOUD Console
+  static const int appID = 1296665015; 
 
-  /// Lấy AppSign (chuỗi 64 ký tự) từ ZEGOCLOUD Console và dán vào đây
-  /// Ví dụ: static const String appSign = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890";
-  static const String appSign = "THAY_BANG_APPSIGN_CUA_BAN";
+  /// AppSign từ ZEGOCLOUD Console
+  static const String appSign = "2df4ed32eb830fbc9355cf5db562dc825cb06f43be83953fb4c88b6357cf0ccf";
 
   /// Kiểm tra xem người dùng đã cấu hình key thật hay chưa
   static bool get isConfigured => appID != 0 && appSign != "THAY_BANG_APPSIGN_CUA_BAN";
